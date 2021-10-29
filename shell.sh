@@ -148,15 +148,26 @@ if [ $SGSCHECK = 1 ]; then
       validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
       echo "$validateTemplate"
       createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --capabilities CAPABILITY_NAMED_IAM --region ${region} 2>&1`
-    echo "$createStack"
+      echo "$createStack"
       ELKSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
       if [ $ELKSTACKCREATE = 1 ]; then
         echo "Stack is already Created"
       else    
         waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${elkStackName} --region ${region}`
       echo "$waitstackCreate"
-        createstackResources=`aws cloudformation describe-stack-events --stack-name ${elkStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-        echo "$createstackResources"
+        trackStackResources=`aws cloudformation describe-stack-events --stack-name ${elkStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+        echo "$trackStackResources"
+        ELKSTACKCREATEFAILED=$(echo $trackStackResources | grep -c 'CREATE_FAILED') 
+        if [ $ELKSTACKCREATEFAILED = 1 ]; then
+          echo "ELK STACK CREATION FAILED.. DELETING ${elkStackName} stack"
+          deletestack=`aws cloudformation delete-stack --stack-name ${elkStackName} --region ${region}`
+          echo "${elkStackName} deleteStatus is.."
+          echo "$deletestack"
+          deleteStatus=`aws cloudformation wait stack-delete-complete --stack-name ${elkStackName} --region ${region}`
+          echo "${elkStackName} deleteStatus is.."
+          echo "$deleteStatus"
+        fi
+                 
       fi
   fi
 else
