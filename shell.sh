@@ -49,7 +49,7 @@ then
     echo "$stackupdate"
     SGSTACKUPDATE=$(echo $stackupdate | grep -c 'No updates are to be performed') 
     if [ $SGSTACKUPDATE = 1 ]; then
-      echo "Stack is already Update to date"
+      echo "Security Group Stack ${sgStackName} is already Update to date"
     else
       waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
       echo "$waitstackUpdate"
@@ -195,6 +195,13 @@ if [ $SGSCHECK = 1 ]; then
           echo "$deletestack"
           deleteStatus=`aws cloudformation wait stack-delete-complete --stack-name ${elkStackName} --region ${region}`
           echo "${elkStackName} deleted"
+          echo "$deleteStatus"
+          echo "DELETING Security Group Stack ${sgStackName} stack"
+          deletestack=`aws cloudformation delete-stack --stack-name ${sgStackName} --region ${region}`
+          echo "${sgStackName} deleting..."
+          echo "$deletestack"
+          deleteStatus=`aws cloudformation wait stack-delete-complete --stack-name ${sgStackName} --region ${region}`
+          echo "${sgStackName} deleted"
           echo "$deleteStatus"
         fi                 
       fi
