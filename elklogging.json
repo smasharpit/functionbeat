@@ -10,7 +10,7 @@
 				"Description" : "My security group",
 				"Type" : "String",
 				"Default": "DEFAULTSECURITYGROUP"
-			},
+			}
 	  },
 	  "fnbcreatepolicyelkCWLtoKinesis": {
 		  "Type" : "AWS::IAM::ManagedPolicy",		  
