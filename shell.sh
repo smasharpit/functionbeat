@@ -73,7 +73,7 @@ then
 		`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
   fi
 else
-    `echo Stack ${sgStackName} exists, attempting update...`
+    echo "Stack ${sgStackName} exists, attempting update..."
     `aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
     `aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
     `aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
