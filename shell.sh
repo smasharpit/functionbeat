@@ -63,22 +63,32 @@ then
     echo "Stack ${sgStackName} exists, attempting update..."
     validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
     echo "$validateTemplate"
-    stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
+    stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}  2>&1`
     echo "$stackupdate"
-    waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
-    echo "$waitstackUpdate"
-    updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-    echo "$updatestackResources"
+    SGSTACKUPDATE=$(echo $stackupdate | grep -c 'No updates are to be performed') 
+    if [ $SGSTACKUPDATE = 1 ]; then
+      echo "Stack is already Update to date"
+    else
+      waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
+      echo "$waitstackUpdate"
+      updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+      echo "$updatestackResources"
+    fi
   else
     echo "Creating ${sgStackName} Stack"
     validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
     echo "$validateTemplate"
-    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --${region}`
+    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region} 2>&1`
 		echo "$createStack"
-    waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
-		echo "$waitstackCreate"
-    createstackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-    echo "$createstackResources"
+    SGSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
+    if [ $SGSTACKCREATE = 1 ]; then
+      echo "Stack is already Created"
+    else    
+      waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
+		  echo "$waitstackCreate"
+      createstackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+      echo "$createstackResources"
+    fi
   fi
 else
     echo "Stack ${sgStackName} exists, attempting update..."
@@ -86,6 +96,10 @@ else
     echo "$validateTemplate"
     stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
     echo "$stackupdate"
+    SGSTACKUPDATE=$(echo $stackupdate | grep -c 'No updates are to be performed') 
+    if [ $SGSTACKUPDATE = 1 ]; then
+      echo "Stack is already Update to date"
+    else
     waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
     echo "$waitstackUpdate"
     updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
