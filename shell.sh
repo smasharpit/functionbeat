@@ -107,3 +107,4 @@ if [ $SGSCHECK = 1 ]; then
   `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/elklogging.json s3://elklogs-${accountId}/elklogging.json`
 else
   echo "ERROR: elklogging Security Group Does not exist"
+fi
