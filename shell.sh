@@ -91,17 +91,19 @@ fi
 securityGroup=`aws ec2 describe-security-groups --region ${region} --filter "Name=tag:Name,Values=elklogging" | grep GroupId | awk -F': "' '{print $2}' | sed 's/"//g;s/,//g'`
 echo "$securityGroup"
 SGSCHECK=$(echo $securityGroup | grep -c 'sg') 
-    if [ $SGSCHECK = 1 ]; then
-      `sed -i "s/SGROUP/${securityGroup}/g" functionbeat/functionbeat.yml`
-      `sed -i "s/REGION/${region}/g" functionbeat/functionbeat.yml`
-      `sed -i "s/ACCOUNTID/${accountId}/g" functionbeat/functionbeat.yml`
-      `sed -i "s/SUBNETIDS/${subnetIdsyml}/g" functionbeat/functionbeat.yml`
-      `sed -i "s,##########,\n          ,g" functionbeat/functionbeat.yml`
-      `dos2unix functionbeat/functionbeat.yml`
-      `zip --quiet -j functionbeat/package-aws.zip functionbeat/functionbeat.yml`
-      sleep 2
-      `sed -i "s/DEFAULTSUBNETS/${subnetIds}/g" functionbeat/elklogging.json`
-      `sed -i "s/DEFAULTSECURITYGROUP/${securityGroup}/g" functionbeat/elklogging.json`
-      sleep 2
-      `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
-      `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/elklogging.json s3://elklogs-${accountId}/elklogging.json`
+if [ $SGSCHECK = 1 ]; then
+  `sed -i "s/SGROUP/${securityGroup}/g" functionbeat/functionbeat.yml`
+  `sed -i "s/REGION/${region}/g" functionbeat/functionbeat.yml`
+  `sed -i "s/ACCOUNTID/${accountId}/g" functionbeat/functionbeat.yml`
+  `sed -i "s/SUBNETIDS/${subnetIdsyml}/g" functionbeat/functionbeat.yml`
+  `sed -i "s,##########,\n          ,g" functionbeat/functionbeat.yml`
+  `dos2unix functionbeat/functionbeat.yml`
+  `zip --quiet -j functionbeat/package-aws.zip functionbeat/functionbeat.yml`
+  sleep 2
+  `sed -i "s/DEFAULTSUBNETS/${subnetIds}/g" functionbeat/elklogging.json`
+  `sed -i "s/DEFAULTSECURITYGROUP/${securityGroup}/g" functionbeat/elklogging.json`
+  sleep 2
+  `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
+  `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/elklogging.json s3://elklogs-${accountId}/elklogging.json`
+else
+  echo "ERROR: elklogging Security Group Does not exist"
