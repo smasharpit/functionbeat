@@ -53,12 +53,14 @@ sleep 2
 `sed -i "s/DEFAULTSECURITYGROUP/${securityGroup}/g" functionbeat/elklogging.json`
 sleep 2
 sgStackName="elklogging-securitygroup"
+echo "$sgStackName"
 SGSTACK_CHECK=$(aws cloudformation describe-stacks --stack-name ${sgStackName} --region ${region} --query Stacks[0].StackStatus 2>&1)
 if [ $? != 0 ]
 then
+  echo "coming here"
   SGSTACK=$(echo $SGSTACK_CHECK | grep -c 'CREATE_COMPLETE') 
   if [ $SGSTACK = 1 ]; then
-    `echo Stack ${sgStackName} exists, attempting update...`
+    echo "Stack ${sgStackName} exists, attempting update..."
     `aws cloudformation update-stack --stack-name ${sgStackName} --template-body functionbeat/securitygroup.json --region ${region}`
     `aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
     `aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
