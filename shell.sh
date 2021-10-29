@@ -147,7 +147,7 @@ if [ $SGSCHECK = 1 ]; then
       echo "Creating ${elkStackName} Stack"
       validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
       echo "$validateTemplate"
-      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --region ${region} 2>&1`
+      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --capabilities CAPABILITY_NAMED_IAM --region ${region} 2>&1`
     echo "$createStack"
       ELKSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
       if [ $ELKSTACKCREATE = 1 ]; then
