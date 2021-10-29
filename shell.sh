@@ -105,6 +105,60 @@ if [ $SGSCHECK = 1 ]; then
   sleep 2
   `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
   `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/elklogging.json s3://elklogs-${accountId}/elklogging.json`
+  elkStackName="elklogging-elkintegration"
+  echo "$elkStackName"
+  ELKSTACK_CHECK=$(aws cloudformation describe-stacks --stack-name ${elkStackName} --region ${region} --query Stacks[0].StackStatus 2>&1)
+  if [ $? == 0 ]
+  then
+    echo "coming here"
+    SGSTACK=$(echo $ELKSTACK_CHECK | grep -c 'CREATE_COMPLETE') 
+    if [ $SGSTACK = 1 ]; then
+      echo "Stack ${elkStackName} exists, attempting update..."
+      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
+      echo "$validateTemplate"
+      stackupdate=`aws cloudformation update-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --region ${region}  2>&1`
+      echo "$stackupdate"
+      ELKSTACKUPDATE=$(echo $stackupdate | grep -c 'No updates are to be performed') 
+      if [ $ELKSTACKUPDATE = 1 ]; then
+        echo "Stack ${elkStackName} is already Update to date"
+      else
+        waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${elkStackName} --region ${region}`
+        echo "$waitstackUpdate"
+        updatestackResources=`aws cloudformation describe-stack-events --stack-name ${elkStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+        echo "$updatestackResources"
+      fi
+    else
+      echo "Creating ${elkStackName} Stack"
+      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
+      echo "$validateTemplate"
+      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --region ${region} 2>&1`
+    echo "$createStack"
+      ELKSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
+      if [ $ELKSTACKCREATE = 1 ]; then
+        echo "Stack is already Created"
+      else    
+        waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${elkStackName} --region ${region}`
+      echo "$waitstackCreate"
+        createstackResources=`aws cloudformation describe-stack-events --stack-name ${elkStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+        echo "$createstackResources"
+      fi
+    fi
+  else
+      echo "Creating ${elkStackName} Stack"
+      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
+      echo "$validateTemplate"
+      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --region ${region} 2>&1`
+    echo "$createStack"
+      ELKSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
+      if [ $ELKSTACKCREATE = 1 ]; then
+        echo "Stack is already Created"
+      else    
+        waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${elkStackName} --region ${region}`
+      echo "$waitstackCreate"
+        createstackResources=`aws cloudformation describe-stack-events --stack-name ${elkStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+        echo "$createstackResources"
+      fi
+  fi
 else
   echo "ERROR: elklogging Security Group Does not exist"
 fi
