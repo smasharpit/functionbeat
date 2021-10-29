@@ -229,7 +229,7 @@
         "Timeout": 3,
         "VpcConfig": {
           "SecurityGroupIds": [{"Ref":"securitygroup"}],
-          "SubnetIds": [{"Ref":"mysubnets"}]
+          "SubnetIds": {"Ref":"mysubnets"}
         }
       },
 	  "DependsOn" : "fnbcreatekinesiselk",
