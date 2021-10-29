@@ -68,8 +68,18 @@ then
     else    
       waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
 		  echo "$waitstackCreate"
-      createstackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-      echo "$createstackResources"
+      trackStackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+      echo "$trackStackResources"
+      SGSTACKCREATEFAILED=$(echo $trackStackResources | grep -c 'CREATE_FAILED')
+      if [ $SGSTACKCREATEFAILED = 1 ]; then
+        echo "SECURITY GROUP STACK CREATION FAILED.. DELETING ${sgStackName} stack"
+        deleteSGstack=`aws cloudformation delete-stack --stack-name ${sgStackName} --region ${region}`
+        echo "${sgStackName} deleting..."
+        echo "$deleteSGstack"
+        deleteSGstack=`aws cloudformation wait stack-delete-complete --stack-name ${sgStackName} --region ${region}`
+        echo "${sgStackName} deleted"
+        echo "$deleteSGstack"
+      fi
     fi
   fi
 else
@@ -84,8 +94,18 @@ else
     else    
       waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
 		  echo "$waitstackCreate"
-      createstackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-      echo "$createstackResources"
+      trackStackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+      echo "$trackStackResources"
+      SGSTACKCREATEFAILED=$(echo $trackStackResources | grep -c 'CREATE_FAILED')
+      if [ $SGSTACKCREATEFAILED = 1 ]; then
+        echo "SECURITY GROUP STACK CREATION FAILED.. DELETING ${sgStackName} stack"
+        deleteSGstack=`aws cloudformation delete-stack --stack-name ${sgStackName} --region ${region}`
+        echo "${sgStackName} deleting..."
+        echo "$deleteSGstack"
+        deleteSGstack=`aws cloudformation wait stack-delete-complete --stack-name ${sgStackName} --region ${region}`
+        echo "${sgStackName} deleted"
+        echo "$deleteSGstack"
+      fi
     fi
 fi
 securityGroup=`aws ec2 describe-security-groups --region ${region} --filter "Name=tag:Name,Values=elklogging" | grep GroupId | awk -F': "' '{print $2}' | sed 's/"//g;s/,//g'`
@@ -132,15 +152,25 @@ if [ $SGSCHECK = 1 ]; then
       validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
       echo "$validateTemplate"
       createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --region ${region} 2>&1`
-    echo "$createStack"
+      echo "$createStack"
       ELKSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
       if [ $ELKSTACKCREATE = 1 ]; then
         echo "Stack is already Created"
       else    
         waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${elkStackName} --region ${region}`
-      echo "$waitstackCreate"
-        createstackResources=`aws cloudformation describe-stack-events --stack-name ${elkStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-        echo "$createstackResources"
+        echo "$waitstackCreate"
+        trackStackResources=`aws cloudformation describe-stack-events --stack-name ${elkStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+        echo "$trackStackResources"
+        ELKSTACKCREATEFAILED=$(echo $trackStackResources | grep -c 'CREATE_FAILED') 
+        if [ $ELKSTACKCREATEFAILED = 1 ]; then
+          echo "ELK STACK CREATION FAILED.. DELETING ${elkStackName} stack"
+          deletestack=`aws cloudformation delete-stack --stack-name ${elkStackName} --region ${region}`
+          echo "${elkStackName} deleting..."
+          echo "$deletestack"
+          deleteStatus=`aws cloudformation wait stack-delete-complete --stack-name ${elkStackName} --region ${region}`
+          echo "${elkStackName} deleted"
+          echo "$deleteStatus"
+        fi
       fi
     fi
   else
@@ -166,8 +196,7 @@ if [ $SGSCHECK = 1 ]; then
           deleteStatus=`aws cloudformation wait stack-delete-complete --stack-name ${elkStackName} --region ${region}`
           echo "${elkStackName} deleted"
           echo "$deleteStatus"
-        fi
-                 
+        fi                 
       fi
   fi
 else
