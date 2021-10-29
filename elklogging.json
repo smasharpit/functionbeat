@@ -279,11 +279,7 @@
         "Runtime": "go1.x",
         "Timeout": 3,
         "VpcConfig": {
-          "SecurityGroupIds": [
-            {
-			  "Fn::GetAtt": [{"Ref":"securitygroup"} ]
-			}
-          ],
+          "SecurityGroupIds": [{"Ref":"securitygroup"}],
           "SubnetIds": [{"Ref":"mysubnets"}]
         }
       },
