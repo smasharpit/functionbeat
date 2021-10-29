@@ -1,0 +1,69 @@
+functionbeat:
+  provider:
+    aws:
+      endpoint: s3.amazaon.com
+      functions:
+      - concurrency: 5
+        dead_letter_config:
+          target_arn: arn:aws:sqs:REGION:ACCOUNTID:elklogging
+        description: lambda function for Cloudwatch logs in Kinesis events
+        enabled: true
+        fields:
+          awsfunctionbeat: kinesis
+          awspoc: aws
+          awstype: lambda
+        name: elklogging-cloudwatchlogs
+        role: arn:aws:iam::ACCOUNTID:role/elklogging
+        triggers:
+        - event_source_arn: arn:aws:kinesis:REGION:ACCOUNTID:stream/elklogging
+        type: cloudwatch_logs_kinesis
+        virtual_private_cloud:
+          security_group_ids:
+          - SGROUP
+          subnet_ids:
+          SUBNETIDS
+      - concurrency: 5
+        description: lambda function for SQS events
+        enabled: true
+        fields:
+          awspoc: aws
+          awstype: sqs
+        name: sqs
+        role: arn:aws:iam::ACCOUNTID:role/elklogging
+        triggers:
+        - event_source_arn: arn:aws:sqs:REGION:ACCOUNTID:elklogging
+        type: sqs
+        virtual_private_cloud:
+          security_group_ids:
+          - SGROUP
+          subnet_ids:
+          SUBNETIDS
+      region: REGION
+keystore:
+  path: /tmp/functionbeat.keystore
+output:
+  logstash:
+    hosts:
+    - 10.60.31.16:8044
+    - 10.60.235.171:8044
+    pipelining: 0
+    ssl:
+      certificate_authorities:
+      - tls-ca-bundle.pem
+      enabled: true
+path:
+  config: /tmp/elk/functionalbeat/functionbeat-7.15.0-linux-x86_64
+  data: /tmp
+  home: /tmp/elk/functionalbeat/functionbeat-7.15.0-linux-x86_64
+  logs: /tmp/logs
+processors:
+- add_host_metadata: null
+- add_cloud_metadata: null
+queue:
+  mem:
+    flush:
+      min_events: 10
+      timeout: 0.01s
+setup:
+  template:
+    enabled: true

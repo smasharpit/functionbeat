@@ -1,0 +1,51 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters" : {
+			 "vpcCIDR": {
+				"Type": "String",
+				"Description" : "CIDR IP Block for VPC",
+				"Default": "DEFAULTVPCCIDR"
+			  },
+			  "vpcID": {
+				"Description" : "Enter VPC ID",
+				"Type" : "String",
+				"Default": "DEFAULTVPCID"
+			}
+	  },
+  "Resources": {
+	  "fnbcreatesecuritygroupelklogging": {
+		 "Type" : "AWS::EC2::SecurityGroup",
+	 	    "Properties" : {
+				"GroupDescription" : "Security Group for sending logs to ELK",
+				"GroupName" : "elklogging",
+				"SecurityGroupEgress" : [ {
+					 "IpProtocol" : "tcp",
+					 "FromPort" : 8000,
+					 "ToPort" : 8099,
+					 "CidrIp" : "10.60.31.16/32"
+					},
+					{
+					 "IpProtocol" : "tcp",
+					 "FromPort" : 8000,
+					 "ToPort" : 8099,
+					 "CidrIp" : "10.60.235.171/32"
+					},
+					{
+					 "IpProtocol" : "tcp",
+					 "FromPort" : 8000,
+					 "ToPort" : 8000,
+					 "CidrIp" : { "Ref" : "vpcCIDR" }
+					}
+				  ],
+				"SecurityGroupIngress" : [ {
+					 "IpProtocol" : "-1",
+					 "FromPort" : -1,
+					 "ToPort" : -1,
+					 "CidrIp" : "172.31.0.0/16"
+				  }],
+				"Tags" : [ {"Key": "Name", "Value": "elklogging"},{"Key": "Team", "Value": "fil-ent-monitoring"} ],
+				"VpcId" : { "Ref" : "vpcID" }
+			}
+	   }
+  }
+}
