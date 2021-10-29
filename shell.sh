@@ -61,26 +61,34 @@ then
   SGSTACK=$(echo $SGSTACK_CHECK | grep -c 'CREATE_COMPLETE') 
   if [ $SGSTACK = 1 ]; then
     echo "Stack ${sgStackName} exists, attempting update..."
-    template=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
-    echo "$template"
+    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
+    echo "$validateTemplate"
     stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
     echo "$stackupdate"
-    `aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
-    `aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+    waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
+    echo "$waitstackUpdate"
+    updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+    echo "$updatestackResources"
   else
     echo "Creating ${sgStackName} Stack"
-    `aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
-    `aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --${region}`
-		`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
-		`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
+    echo "$validateTemplate"
+    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --${region}`
+		echo "$createStack"
+    waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
+		echo "$waitstackCreate"
+    createstackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+    echo "$createstackResources"
   fi
 else
     echo "Stack ${sgStackName} exists, attempting update..."
-    template=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
-    echo "$template"
+    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
+    echo "$validateTemplate"
     stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
     echo "$stackupdate"
-    `aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
-    `aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+    waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
+    echo "$waitstackUpdate"
+    updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+    echo "$updatestackResources"
 fi
 #`aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
