@@ -12,6 +12,7 @@
 				"Default": "DEFAULTSECURITYGROUP"
 			}
 	  },
+  "Resources": {
 	  "fnbcreatepolicyelkCWLtoKinesis": {
 		  "Type" : "AWS::IAM::ManagedPolicy",		  
 		  "Properties" : {		  
