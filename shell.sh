@@ -61,8 +61,10 @@ then
   SGSTACK=$(echo $SGSTACK_CHECK | grep -c 'CREATE_COMPLETE') 
   if [ $SGSTACK = 1 ]; then
     echo "Stack ${sgStackName} exists, attempting update..."
-    `aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
-    `aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
+    template=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
+    echo "$template"
+    stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
+    echo "$stackupdate"
     `aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
     `aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
   else
@@ -74,7 +76,10 @@ then
   fi
 else
     echo "Stack ${sgStackName} exists, attempting update..."
-    `aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
+    template=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
+    echo "$template"
+    stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
+    echo "$stackupdate"
     `aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
     `aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
 fi
