@@ -47,7 +47,7 @@ sleep 2
 `sed -i "s/SUBNETIDS/${subnetIdsyml}/g" functionbeat/functionbeat.yml`
 `sed -i "s,##########,\n          ,g" functionbeat/functionbeat.yml`
 `dos2unix functionbeat/functionbeat.yml`
-`zip --quiet -j functionbeat/package-aws.zip -i functionbeat/functionbeat.yml`
+`zip --quiet -j functionbeat/package-aws.zip functionbeat/functionbeat.yml`
 sleep 2
 `sed -i "s/DEFAULTSUBNETS/${subnetIds}/g" functionbeat/elklogging.json`
 `sed -i "s/DEFAULTSECURITYGROUP/${securityGroup}/g" functionbeat/elklogging.json`
