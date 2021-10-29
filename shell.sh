@@ -100,9 +100,10 @@ else
     if [ $SGSTACKUPDATE = 1 ]; then
       echo "Stack is already Update to date"
     else
-    waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
-    echo "$waitstackUpdate"
-    updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-    echo "$updatestackResources"
+      waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
+      echo "$waitstackUpdate"
+      updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+      echo "$updatestackResources"
+    fi
 fi
 #`aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
