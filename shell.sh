@@ -31,8 +31,12 @@ then
   if [ $NO_BUCKET_CHECK = 1 ]; then
     echo "bucket filelkintegration-${accountId} does not exist in ${region}"
     echo "creating bucket filelkintegration-${accountId} in ${region}"
-    `aws s3api create-bucket --bucket filelkintegration-${accountId} --region ${region}  --create-bucket-configuration LocationConstraint=${region}  --acl private`
-    echo "creating bucket filelkintegration-${accountId} in ${region}"
+    s3bucket=`aws s3api create-bucket --bucket filelkintegration-${accountId} --region ${region}  --create-bucket-configuration LocationConstraint=${region}  --acl private`
+    echo "created bucket filelkintegration-${accountId} in ${region}"
+    echo "$s3bucket"
+    s3bucketblockpublic=`aws s3api put-public-access-block --bucket filelkintegration-${accountId} --region ${region} --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"`
+    echo "blocking public access of S3 bucket"
+    echo "$s3bucketblockpublic"
   fi
 fi
 sleep 2
