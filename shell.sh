@@ -161,10 +161,10 @@ if [ $SGSCHECK = 1 ]; then
         if [ $ELKSTACKCREATEFAILED = 1 ]; then
           echo "ELK STACK CREATION FAILED.. DELETING ${elkStackName} stack"
           deletestack=`aws cloudformation delete-stack --stack-name ${elkStackName} --region ${region}`
-          echo "${elkStackName} deleteStatus is.."
+          echo "${elkStackName} deleting..."
           echo "$deletestack"
           deleteStatus=`aws cloudformation wait stack-delete-complete --stack-name ${elkStackName} --region ${region}`
-          echo "${elkStackName} deleteStatus is.."
+          echo "${elkStackName} deleted"
           echo "$deleteStatus"
         fi
                  
