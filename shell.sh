@@ -20,13 +20,6 @@ echo "$subnetIds"
 subnetIdsyml=`aws ec2 describe-subnets --region ${region} --filter "Name=vpc-id,Values=${vpcId}"  | grep SubnetId | tr -d '\n' | sed 's/"SubnetId": //g;s/ //g;s/.$//;s/","/,/g;s/"//g;s/^/- /g;s/,/##########- /g'`
 echo "$subnetIdsyml"
 sleep 1
-securityGroup=`aws ec2 describe-security-groups --region ${region} --filter "Name=tag:Name,Values=elklogging" | grep GroupId | awk -F': "' '{print $2}' | sed 's/"//g;s/,//g'`
-echo "$securityGroup"
-sleep 1
-#`rm -rf functionbeat`
-sleep 1
-#`git clone https://github.com/smasharpit/functionbeat.git`
-sleep 1
 `sed -i "s,DEFAULTVPCCIDR,${cidrBlock},g" functionbeat/securitygroup.json`
 `sed -i "s/DEFAULTVPCID/${vpcId}/g" functionbeat/securitygroup.json`
 sleep 1
@@ -40,17 +33,6 @@ then
 fi
 sleep 2
 `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/securitygroup.json s3://elklogs-${accountId}/securitygroup.json`
-sleep 2
-`sed -i "s/REGION/${region}/g" functionbeat/functionbeat.yml`
-`sed -i "s/ACCOUNTID/${accountId}/g" functionbeat/functionbeat.yml`
-`sed -i "s/SGROUP/${securityGroup}/g" functionbeat/functionbeat.yml`
-`sed -i "s/SUBNETIDS/${subnetIdsyml}/g" functionbeat/functionbeat.yml`
-`sed -i "s,##########,\n          ,g" functionbeat/functionbeat.yml`
-`dos2unix functionbeat/functionbeat.yml`
-`zip --quiet -j functionbeat/package-aws.zip functionbeat/functionbeat.yml`
-sleep 2
-`sed -i "s/DEFAULTSUBNETS/${subnetIds}/g" functionbeat/elklogging.json`
-`sed -i "s/DEFAULTSECURITYGROUP/${securityGroup}/g" functionbeat/elklogging.json`
 sleep 2
 sgStackName="elklogging-securitygroup"
 echo "$sgStackName"
@@ -91,19 +73,35 @@ then
     fi
   fi
 else
-    echo "Stack ${sgStackName} exists, attempting update..."
+    echo "Creating ${sgStackName} Stack"
     validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
     echo "$validateTemplate"
-    stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}`
-    echo "$stackupdate"
-    SGSTACKUPDATE=$(echo $stackupdate | grep -c 'No updates are to be performed') 
-    if [ $SGSTACKUPDATE = 1 ]; then
-      echo "Stack is already Update to date"
-    else
-      waitstackUpdate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
-      echo "$waitstackUpdate"
-      updatestackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
-      echo "$updatestackResources"
+    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region} 2>&1`
+		echo "$createStack"
+    SGSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
+    if [ $SGSTACKCREATE = 1 ]; then
+      echo "Stack is already Created"
+    else    
+      waitstackCreate=`aws cloudformation wait stack-create-complete --stack-name ${sgStackName} --region ${region}`
+		  echo "$waitstackCreate"
+      createstackResources=`aws cloudformation describe-stack-events --stack-name ${sgStackName} --query 'StackEvents[].[{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}]' --output table --region ${region}`
+      echo "$createstackResources"
     fi
 fi
-#`aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
+securityGroup=`aws ec2 describe-security-groups --region ${region} --filter "Name=tag:Name,Values=elklogging" | grep GroupId | awk -F': "' '{print $2}' | sed 's/"//g;s/,//g'`
+echo "$securityGroup"
+SGSCHECK=$(echo $securityGroup | grep -c 'sg') 
+    if [ $SGSCHECK = 1 ]; then
+      `sed -i "s/SGROUP/${securityGroup}/g" functionbeat/functionbeat.yml`
+      `sed -i "s/REGION/${region}/g" functionbeat/functionbeat.yml`
+      `sed -i "s/ACCOUNTID/${accountId}/g" functionbeat/functionbeat.yml`
+      `sed -i "s/SUBNETIDS/${subnetIdsyml}/g" functionbeat/functionbeat.yml`
+      `sed -i "s,##########,\n          ,g" functionbeat/functionbeat.yml`
+      `dos2unix functionbeat/functionbeat.yml`
+      `zip --quiet -j functionbeat/package-aws.zip functionbeat/functionbeat.yml`
+      sleep 2
+      `sed -i "s/DEFAULTSUBNETS/${subnetIds}/g" functionbeat/elklogging.json`
+      `sed -i "s/DEFAULTSECURITYGROUP/${securityGroup}/g" functionbeat/elklogging.json`
+      sleep 2
+      `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
+      `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/elklogging.json s3://elklogs-${accountId}/elklogging.json`
