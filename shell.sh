@@ -23,16 +23,20 @@ sleep 1
 `sed -i "s,DEFAULTVPCCIDR,${cidrBlock},g" functionbeat/securitygroup.json`
 `sed -i "s/DEFAULTVPCID/${vpcId}/g" functionbeat/securitygroup.json`
 sleep 1
-S3_CHECK=$(aws s3 ls "s3://elklogs-${accountId}" 2>&1)
+echo "checking bucket filelkintegration-${accountId} existance in ${region}"
+S3_CHECK=$(aws s3 ls "s3://filelkintegration-${accountId}" 2>&1)
 if [ $? != 0 ]
 then
-  NO_BUCKET_CHECK=$(echo $S3_CHECK | grep -c 'NoSuchBucket') 
+  NO_BUCKET_CHECK=$(echo $S3_CHECK | grep -c 'NoSuchBucket')
   if [ $NO_BUCKET_CHECK = 1 ]; then
-    `aws s3api create-bucket --bucket elklogs-${accountId} --region ${region}  --create-bucket-configuration LocationConstraint=${region}  --acl private`
+    echo "bucket filelkintegration-${accountId} does not exist in ${region}"
+    echo "creating bucket filelkintegration-${accountId} in ${region}"
+    `aws s3api create-bucket --bucket filelkintegration-${accountId} --region ${region}  --create-bucket-configuration LocationConstraint=${region}  --acl private`
+    echo "creating bucket filelkintegration-${accountId} in ${region}"
   fi
 fi
 sleep 2
-`aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/securitygroup.json s3://elklogs-${accountId}/securitygroup.json`
+`aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/securitygroup.json s3://filelkintegration-${accountId}/securitygroup.json`
 sleep 2
 sgStackName="elklogging-securitygroup"
 echo "$sgStackName"
@@ -43,9 +47,9 @@ then
   SGSTACK=$(echo $SGSTACK_CHECK | grep -c 'CREATE_COMPLETE') 
   if [ $SGSTACK = 1 ]; then
     echo "Stack ${sgStackName} exists, attempting update..."
-    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
+    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/securitygroup.json  --region ${region}`
     echo "$validateTemplate"
-    stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region}  2>&1`
+    stackupdate=`aws cloudformation update-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/securitygroup.json --region ${region}  2>&1`
     echo "$stackupdate"
     SGSTACKUPDATE=$(echo $stackupdate | grep -c 'No updates are to be performed') 
     if [ $SGSTACKUPDATE = 1 ]; then
@@ -58,9 +62,9 @@ then
     fi
   else
     echo "Creating ${sgStackName} Stack"
-    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
+    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/securitygroup.json  --region ${region}`
     echo "$validateTemplate"
-    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region} 2>&1`
+    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/securitygroup.json --region ${region} 2>&1`
 		echo "$createStack"
     SGSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
     if [ $SGSTACKCREATE = 1 ]; then
@@ -84,9 +88,9 @@ then
   fi
 else
     echo "Creating ${sgStackName} Stack"
-    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json  --region ${region}`
+    validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/securitygroup.json  --region ${region}`
     echo "$validateTemplate"
-    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/securitygroup.json --region ${region} 2>&1`
+    createStack=`aws cloudformation create-stack --stack-name ${sgStackName} --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/securitygroup.json --region ${region} 2>&1`
 		echo "$createStack"
     SGSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
     if [ $SGSTACKCREATE = 1 ]; then
@@ -123,8 +127,8 @@ if [ $SGSCHECK = 1 ]; then
   `sed -i "s/DEFAULTSUBNETS/${subnetIds}/g" functionbeat/elklogging.json`
   `sed -i "s/DEFAULTSECURITYGROUP/${securityGroup}/g" functionbeat/elklogging.json`
   sleep 2
-  `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://elklogs-${accountId}/package-aws.zip`
-  `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/elklogging.json s3://elklogs-${accountId}/elklogging.json`
+  `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/package-aws.zip s3://filelkintegration-${accountId}/package-aws.zip`
+  `aws s3 cp --quiet --ignore-glacier-warnings --only-show-errors functionbeat/elklogging.json s3://filelkintegration-${accountId}/elklogging.json`
   elkStackName="elklogging-elkintegration"
   echo "$elkStackName"
   ELKSTACK_CHECK=$(aws cloudformation describe-stacks --stack-name ${elkStackName} --region ${region} --query Stacks[0].StackStatus 2>&1)
@@ -134,9 +138,9 @@ if [ $SGSCHECK = 1 ]; then
     SGSTACK=$(echo $ELKSTACK_CHECK | grep -c 'CREATE_COMPLETE') 
     if [ $SGSTACK = 1 ]; then
       echo "Stack ${elkStackName} exists, attempting update..."
-      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
+      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/elklogging.json  --region ${region}`
       echo "$validateTemplate"
-      stackupdate=`aws cloudformation update-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --region ${region}  2>&1`
+      stackupdate=`aws cloudformation update-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/elklogging.json --region ${region}  2>&1`
       echo "$stackupdate"
       ELKSTACKUPDATE=$(echo $stackupdate | grep -c 'No updates are to be performed') 
       if [ $ELKSTACKUPDATE = 1 ]; then
@@ -149,9 +153,9 @@ if [ $SGSCHECK = 1 ]; then
       fi
     else
       echo "Creating ${elkStackName} Stack"
-      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
+      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/elklogging.json  --region ${region}`
       echo "$validateTemplate"
-      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --region ${region} 2>&1`
+      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/elklogging.json --region ${region} 2>&1`
       echo "$createStack"
       ELKSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
       if [ $ELKSTACKCREATE = 1 ]; then
@@ -175,9 +179,9 @@ if [ $SGSCHECK = 1 ]; then
     fi
   else
       echo "Creating ${elkStackName} Stack"
-      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json  --region ${region}`
+      validateTemplate=`aws cloudformation validate-template --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/elklogging.json  --region ${region}`
       echo "$validateTemplate"
-      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/elklogs-${accountId}/elklogging.json --capabilities CAPABILITY_NAMED_IAM --region ${region} 2>&1`
+      createStack=`aws cloudformation create-stack --stack-name ${elkStackName} --template-url https://s3.amazonaws.com/filelkintegration-${accountId}/elklogging.json --capabilities CAPABILITY_NAMED_IAM --region ${region} 2>&1`
       echo "$createStack"
       ELKSTACKCREATE=$(echo $createStack | grep -c 'already exists') 
       if [ $ELKSTACKCREATE = 1 ]; then

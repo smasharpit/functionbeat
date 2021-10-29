@@ -96,7 +96,7 @@
 							"Resource": [								
 								{ "Fn::Join" : [ "", [ "arn:aws:logs:" , { "Ref": "AWS::Region"},":",{ "Ref": "AWS::AccountId"},":log-group:elklogging*:log-stream:*"] ] },
 								{ "Fn::Join" : [ "", [ "arn:aws:sqs:" , { "Ref": "AWS::Region"},":",{ "Ref": "AWS::AccountId"},":elklogging-dlqsqs"] ] },
-								{ "Fn::Join" : [ "", [ "arn:aws:s3:::elklogs-" , { "Ref": "AWS::AccountId"} ,"/*" ] ] },
+								{ "Fn::Join" : [ "", [ "arn:aws:s3:::filelkintegration-" , { "Ref": "AWS::AccountId"} ,"/*" ] ] },
 								{ "Fn::Join" : [ "", [ "arn:aws:kinesis:" , { "Ref": "AWS::Region"},":",{ "Ref": "AWS::AccountId"},":*/elklogging/consumer/*:*"] ] },
 								{ "Fn::Join" : [ "", [ "arn:aws:kinesis:" , { "Ref": "AWS::Region"},":",{ "Ref": "AWS::AccountId"},":stream/elklogging"] ] }
 							]
@@ -206,7 +206,7 @@
     "fnbcreatecloudwatchlambdaelk": {
       "Properties": {
         "Code": {
-           "S3Bucket": { "Fn::Join" : [ "", [ "elklogs-" , { "Ref": "AWS::AccountId"} ] ] },
+           "S3Bucket": { "Fn::Join" : [ "", [ "filelkintegration-" , { "Ref": "AWS::AccountId"} ] ] },
            "S3Key": "package-aws.zip"
         },
         "DeadLetterConfig": {
@@ -261,7 +261,7 @@
 	"fnbcreatedlqsqslambdaelk": {
       "Properties": {
         "Code": {
-		  "S3Bucket": { "Fn::Join" : [ "", [ "elklogs-" , { "Ref": "AWS::AccountId"} ] ] },
+		  "S3Bucket": { "Fn::Join" : [ "", [ "filelkintegration-" , { "Ref": "AWS::AccountId"} ] ] },
           "S3Key": "package-aws.zip"
         },
         "Description": "lambda function for DLQ SQS events",
